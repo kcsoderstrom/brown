@@ -6,8 +6,19 @@
 
   var Game = Brown.Game = function(ctx) {
     this.ctx = ctx;
-    this.asteroids = [ new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx) ];
-    this.waterVel = [2,0];
+    this.asteroids = [ new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx), new Asteroid(ctx) ];
+    this.waterVels = new Array(Brown.WIDTH);
+
+    for(var j = 0; j < Brown.WIDTH; j += 1) {
+      this.waterVels[j] = new Array();
+      var arr = this.waterVels[j];
+      for(var i = 0; i < Brown.WIDTH; i += 1) {
+        arr.push([0, Math.floor(i / 200)]);
+      }
+    };
+
+    this.initializeVels();
+    console.log("the vels", this.waterVels)
   };
 
   Game.prototype.start = function() {
@@ -16,28 +27,66 @@
     setInterval(function(){
       ctx.fillStyle = "#CFF"
       ctx.fillRect(0, 0, Brown.WIDTH, Brown.HEIGHT);
-      that.flow();
       asteroids.forEach(function(asteroid){
         asteroid.move();
         asteroid.draw();
       })
+      that.flow();
     }, 30);
   };
 
   Game.prototype.flow = function() {
     var that = this;
     this.asteroids.forEach(function(asteroid){
-      asteroid.pos[0] += that.waterVel[0];
-      asteroid.pos[1] += that.waterVel[1];
+      var x = Math.floor(asteroid.pos[0]);
+      var y = Math.floor(asteroid.pos[1]);
+      asteroid.pos[0] += that.waterVels[x][y][0];
+      asteroid.pos[1] += that.waterVels[x][y][1];
+      asteroid.modOut();
     });
+
+  };
+
+  Game.prototype.initializeVels = function() {
+
+    // fill the seeds here.
+    for(var j = 0; j < Brown.HEIGHT; j += 1) {
+      this.waterVels[0][j][0] = Math.random() * 3;
+      this.waterVels[0][j][1] = Math.tan((j / 500 - 3/4) * (-3/2));
+    }
+
+    for(var i = 0; i < Brown.WIDTH; i += 1) {
+      this.waterVels[i][0][0] = Math.random() * 2 + 3;
+      this.waterVels[i][0][1] = (Math.random() * 2 - 1) / 2;
+    }
+
+    // use the seeds to generate the rest.
+    for(var i = 1; i < Brown.WIDTH; i += 1) {
+      for(var j = 1; j < Brown.HEIGHT; j += 1) {
+        // var lastUx = this.waterVels[i - 1][j][0];
+        // var lastUy = this.waterVels[i - 1][j][1];
+
+        // duy/dy to the left to tell us our dux/dx
+        var duydy = this.waterVels[i - 1][j][1] - this.waterVels[i - 1][j - 1][1];
+        this.waterVels[i][j][0] = this.waterVels[i - 1][j][0] - duydy;
+
+        // dux/dx above to tell us our duy/dy
+        var duxdx = this.waterVels[i][j - 1][0] - this.waterVels[i - 1][j - 1][0];
+        this.waterVels[i][j][1] = this.waterVels[i][j - 1][1] - duxdx;
+
+
+        // this.waterVels[i][j][0] = lastUx;
+        // this.waterVels[i][j][1] = lastUy;
+      }
+    }
   };
 
   var Asteroid = Game.Asteroid = function(ctx) {
     this.color = "#FFF";
-    this.radius = 10;
-    this.accel = [50, 50];
+    this.radius = 30;
+    this.accel = [0, 0];
     this.vel = [5, 0];
-    this.pos = [Math.random()*500,Math.random()*500];
+    this.pos = [Math.random()*500, Math.random()*500];
     this.ctx = ctx;
   };
 
@@ -64,8 +113,8 @@
     this.vel[0] += this.accel[0];
     this.vel[1] += this.accel[1];
 
-    this.accel[0] = Math.round((-this.vel[0] + Math.random() - 1/2) / (this.radius/11) );
-    this.accel[1] = Math.round((-this.vel[1] + Math.random() - 1/2) / (this.radius/11) );
+    //this.accel[0] = Math.round((-this.vel[0] + Math.random() - 1/2) / (this.radius/11) );
+    //this.accel[1] = Math.round((-this.vel[1] + Math.random() - 1/2) / (this.radius/11) );
 
     this.modOut();
   };
@@ -77,7 +126,7 @@
       pos[0] += Brown.WIDTH;
     }
 
-    while(pos[0] > Brown.WIDTH) {
+    while(pos[0] >= Brown.WIDTH) {
       pos[0] -= Brown.WIDTH;
     }
 
@@ -85,7 +134,7 @@
       pos[1] += Brown.HEIGHT;
     }
 
-    while(pos[1] > Brown.HEIGHT) {
+    while(pos[1] >= Brown.HEIGHT) {
       pos[1] -= Brown.HEIGHT;
     }
   }
